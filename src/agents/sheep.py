@@ -1,5 +1,6 @@
 import numpy as np
 from src.env.constants import *
+from src.physics.forces import wall_repulsion
 from src.utils.math import limit_magnitude, normalize
 
 class Sheep:
@@ -41,18 +42,18 @@ class Sheep:
 
         noise = np.random.uniform(-1, 1, size=2)
 
+        wall_force = wall_repulsion(self.pos)
+
         acceleration = (
             SEPARATION_WEIGHT * separation +
             ALIGNMENT_WEIGHT * alignment +
             COHESION_WEIGHT * cohesion +
             DOG_REPULSION_WEIGHT * dog_force +
+            wall_force +
             NOISE_WEIGHT * noise
         )
 
         self.vel += acceleration
         self.vel = limit_magnitude(self.vel, SHEEP_MAX_SPEED)
         self.pos += self.vel
-
-        # Boundary wrap
-        self.pos[0] %= FIELD_WIDTH
-        self.pos[1] %= FIELD_HEIGHT
+        
