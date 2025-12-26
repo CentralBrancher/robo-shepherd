@@ -1,4 +1,5 @@
 import pygame
+import pygame.font
 import numpy as np
 
 from src.env.constants import *
@@ -16,6 +17,7 @@ class PygameRenderer:
         self.screen = pygame.display.set_mode((FIELD_WIDTH, FIELD_HEIGHT))
         pygame.display.set_caption("Robo Shepherd")
         self.clock = pygame.time.Clock()
+        self.font = pygame.font.SysFont("consolas", 18)
 
     def render(self, sheep, dog, world):
         self.clock.tick(FPS)
@@ -51,4 +53,10 @@ class PygameRenderer:
         pygame.draw.circle(self.screen, YELLOW, centroid.astype(int), 4)
         pygame.draw.circle(self.screen, YELLOW, centroid.astype(int), int(radius), 1)
 
+        # HUD
+        text = f"Sheep in gate: {sum(world.gate.contains(s.pos) for s in sheep)} / {len(sheep)}"
+        surface = self.font.render(text, True, (255, 255, 255))
+        self.screen.blit(surface, (10, 10))
+
         pygame.display.flip()
+

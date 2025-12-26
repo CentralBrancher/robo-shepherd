@@ -7,6 +7,7 @@ from src.agents.dog import Dog
 from src.env.world import World
 from src.render.pygame_renderer import PygameRenderer
 from src.rewards.shaping import compute_reward
+from src.env.shepherd_env import EpisodeState
 
 renderer = PygameRenderer()
 world = World()
@@ -16,6 +17,8 @@ sheep = [
            np.random.uniform(0, FIELD_HEIGHT)))
     for _ in range(NUM_SHEEP)
 ]
+
+episode = EpisodeState(len(sheep))
 
 dog = Dog((FIELD_WIDTH / 2, FIELD_HEIGHT / 2))
 
@@ -32,6 +35,13 @@ while running:
         s.update(sheep, dog.pos)
 
     reward = compute_reward(sheep, world)
+    episode.update(sheep, world)
+
     renderer.render(sheep, dog, world)
+
+    if episode.done:
+        print("SUCCESS!" if episode.success else "FAILED")
+        pygame.time.wait(2000)
+        running = False
 
 pygame.quit()
