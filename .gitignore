@@ -1,0 +1,59 @@
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# =========================
+# Jupyter / Notebooks
+# =========================
+.ipynb_checkpoints/
+*.nbconvert.ipynb
+
+# =========================
+# Data & ML Artifacts
+# =========================
+data/processed/
+data/interim/
+*.npy
+*.npz
+*.pkl
+*.joblib
+*.h5
+
+# Model cache (HF / sentence-transformers)
+.cache/
+.cache/**
+models/
+checkpoints/
+
+# =========================
+# Logs & Output
+# =========================
+logs/
+*.log
+outputs/
+results/
+
+# =========================
+# OS / Editor
+# =========================
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+*.code-workspac*
