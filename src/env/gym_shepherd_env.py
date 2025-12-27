@@ -8,6 +8,7 @@ from src.env.shepherd_env import EpisodeState
 from src.agents.dog import Dog
 from src.agents.sheep import Sheep
 from src.rewards.shaping import compute_reward
+from src.physics.flocking import compute_centroid
 
 class ShepherdGymEnv(gym.Env):
     metadata = {"render_modes": ["human"], "render_fps": FPS}
@@ -49,7 +50,7 @@ class ShepherdGymEnv(gym.Env):
                 raise SystemExit
 
         self.renderer.render(self.sheep, self.dogs, self.world)
-
+    
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
         self.world.reset()
@@ -58,6 +59,10 @@ class ShepherdGymEnv(gym.Env):
         self.sheep = [Sheep((np.random.rand()*FIELD_WIDTH, np.random.rand()*FIELD_HEIGHT))
                       for _ in range(NUM_SHEEP)]
         self.episode = EpisodeState(NUM_SHEEP)
+
+        # Track previous centroid for reward shaping
+        self.prev_centroid = compute_centroid(self.sheep)
+
         return self._obs(), {}
 
     def step(self, action):
@@ -69,7 +74,13 @@ class ShepherdGymEnv(gym.Env):
         for s in self.sheep:
             s.update(self.sheep, dogs_data)
 
-        reward = compute_reward(self.sheep, self.world)
+        # Compute reward with previous centroid
+        curr_centroid = compute_centroid(self.sheep)
+        reward = compute_reward(self.sheep, self.world, prev_centroid=self.prev_centroid)
+
+        # Update prev_centroid for next step
+        self.prev_centroid = curr_centroid
+
         self.episode.update(self.sheep, self.world)
 
         if self.render_mode == "human":

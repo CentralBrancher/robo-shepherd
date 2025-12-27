@@ -40,7 +40,29 @@ class PygameRenderer:
 
         # Dog
         for d in dogs:
-            pygame.draw.circle(self.screen, RED, d.pos.astype(int), DOG_RADIUS)
+            if d.bark > 0:  # actively barking
+                color = (
+                    int(RED[0] + (YELLOW[0] - RED[0]) * d.bark),
+                    int(RED[1] + (YELLOW[1] - RED[1]) * d.bark),
+                    int(RED[2] + (YELLOW[2] - RED[2]) * d.bark)
+                )
+            elif d.bark_cooldown > 0:  # cooling down
+                cooldown_ratio = d.bark_cooldown / d.bark_cooldown_max
+                # fade from RED (ready) to ORANGE (cooling)
+                color = (
+                    int(RED[0] + (255 - RED[0]) * cooldown_ratio),
+                    int(RED[1] + (165 - RED[1]) * cooldown_ratio),
+                    int(RED[2] + (0 - RED[2]) * cooldown_ratio)
+                )
+            else:
+                color = RED  # idle
+
+            pygame.draw.circle(self.screen, color, d.pos.astype(int), DOG_RADIUS)
+
+            # Optional halo for active bark
+            if d.bark > 0:
+                halo_radius = DOG_RADIUS + int(d.bark * 10)
+                pygame.draw.circle(self.screen, YELLOW, d.pos.astype(int), halo_radius, 2)
 
         # Debug: centroid + radius
         centroid = compute_centroid(sheep)
