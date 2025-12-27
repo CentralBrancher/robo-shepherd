@@ -56,4 +56,7 @@ class Sheep:
         self.vel += acceleration
         self.vel = limit_magnitude(self.vel, SHEEP_MAX_SPEED)
         self.pos += self.vel
-        
+
+        self.pos[0] = np.clip(self.pos[0], 0, FIELD_WIDTH)
+        self.pos[1] = np.clip(self.pos[1], 0, FIELD_HEIGHT)
+

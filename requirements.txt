@@ -5,7 +5,7 @@ pygame>=2.5
 # Configs
 pyyaml>=6.0
 
-# RL (not used yet, but next step)
+# RL
 gymnasium>=0.29
 stable-baselines3>=2.2
 torch>=2.1
@@ -13,6 +13,6 @@ torch>=2.1
 # Logging / debugging
 tensorboard>=2.15
 
-# Model export / inference (later)
+# Model export
 onnx>=1.15
 onnxruntime>=1.17

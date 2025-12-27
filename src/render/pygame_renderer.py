@@ -60,3 +60,7 @@ class PygameRenderer:
 
         pygame.display.flip()
 
+    def close(self):
+        pygame.quit()
+
+
