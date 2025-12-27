@@ -9,5 +9,6 @@ class KinematicBody:
 
     def integrate(self, accel):
         self.vel += accel
+        self.vel *= 0.95        
         self.vel = limit_magnitude(self.vel, self.max_speed)
         self.pos += self.vel

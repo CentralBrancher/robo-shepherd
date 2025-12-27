@@ -72,11 +72,11 @@ class ShepherdGymEnv(gym.Env):
             dogs_data.append((dog.pos.copy(), bark))
 
         for s in self.sheep:
-            s.update(self.sheep, dogs_data)
+            s.update(self.sheep, dogs_data, self.world.gate.center)
 
         # Compute reward with previous centroid
         curr_centroid = compute_centroid(self.sheep)
-        reward = compute_reward(self.sheep, self.world, prev_centroid=self.prev_centroid)
+        reward = compute_reward(self.sheep, self.dogs, self.world, prev_centroid=self.prev_centroid)
 
         # Update prev_centroid for next step
         self.prev_centroid = curr_centroid
@@ -86,7 +86,13 @@ class ShepherdGymEnv(gym.Env):
         if self.render_mode == "human":
             self.render()
 
-        return self._obs(), reward, self.episode.success, self.episode.done, {"success": self.episode.success}
+        info = {
+            "success": self.episode.success,
+            "sheep_in_gate": sum(self.world.gate.contains(s.pos) for s in self.sheep),
+            "reward": reward
+        }
+
+        return self._obs(), reward, self.episode.success, self.episode.done, info
 
     def _obs(self):
         obs = []

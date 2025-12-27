@@ -12,6 +12,7 @@ torch>=2.1
 
 # Logging / debugging
 tensorboard>=2.15
+tqdm>=4.64
 
 # Model export
 onnx>=1.15

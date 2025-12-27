@@ -26,7 +26,10 @@ class Dog(KinematicBody):
         accel = move * self.accel_scale
         self.integrate(accel)
 
-        self.pos[0] = np.clip(self.pos[0], 0, FIELD_WIDTH)
-        self.pos[1] = np.clip(self.pos[1], 0, FIELD_HEIGHT)
+        # Hard wall handling (no sticking)
+        for i, limit in enumerate([FIELD_WIDTH, FIELD_HEIGHT]):
+            if self.pos[i] <= 0 or self.pos[i] >= limit:
+                self.vel[i] = 0
+                self.pos[i] = np.clip(self.pos[i], 0, limit)
 
         return self.bark

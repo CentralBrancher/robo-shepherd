@@ -1,37 +1,43 @@
-import numpy as np
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv
-from stable_baselines3.common.callbacks import CheckpointCallback
-
+from scripts.callbacks import ProgressCallback, make_checkpoint_callback
 from src.env.gym_shepherd_env import ShepherdGymEnv
 
-def make_env():
-    return ShepherdGymEnv(render_mode=None)
+# -----------------------------
+# Parallel environments
+# -----------------------------
+NUM_ENVS = 4
+env = DummyVecEnv([lambda: ShepherdGymEnv(render_mode=None) for _ in range(NUM_ENVS)])
 
-env = DummyVecEnv([make_env])
-
+# -----------------------------
+# PPO model
+# -----------------------------
 model = PPO(
-    policy="MlpPolicy",
-    env=env,
+    "MlpPolicy",
+    env,
     verbose=1,
-    n_steps=2048,
+    n_steps=1024,
     batch_size=64,
     learning_rate=3e-4,
     gamma=0.99,
-    ent_coef=0.01,
+    ent_coef=0.01
 )
 
-checkpoint_callback = CheckpointCallback(
-    save_freq=50_000, save_path="./models/",
-    name_prefix="ppo_shepherd"
-)
+# -----------------------------
+# Callbacks
+# -----------------------------
+progress_callback = ProgressCallback()
+checkpoint_callback = make_checkpoint_callback()
 
-TOTAL_TIMESTEPS = 500_000
-
+# -----------------------------
+# Train
+# -----------------------------
+TOTAL_TIMESTEPS = 20_000
 model.learn(
     total_timesteps=TOTAL_TIMESTEPS,
-    callback=checkpoint_callback
+    callback=[checkpoint_callback, progress_callback]
 )
 
-model.save("./models/ppo_shepherd_2dogs")
-print("Training complete! Model saved to './models/ppo_shepherd_2dogs.zip'")
+# Save final model
+model.save("./models/ppo_shepherd_2048")
+print("Training complete! Model saved.")
