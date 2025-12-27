@@ -39,5 +39,5 @@ model.learn(
 )
 
 # Save final model
-model.save("./models/ppo_shepherd_2048")
+model.save("./models/ppo_shepherd")
 print("Training complete! Model saved.")

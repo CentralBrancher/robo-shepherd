@@ -36,13 +36,11 @@ class Sheep:
             diff = self.pos - dog_pos
             dist = np.linalg.norm(diff)
             if dist < DOG_REPULSION_RADIUS and dist > 0:
-                # soft directional pressure
                 pressure = directional_pressure(
                     sheep_pos=self.pos,
                     dog_pos=dog_pos,
                     gate_pos=gate_pos
                 )
-
                 strength = (DOG_REPULSION_RADIUS / dist) * pressure * (1 + bark * BARK_MULTIPLIER)
                 dog_force += normalize(diff) * strength
 

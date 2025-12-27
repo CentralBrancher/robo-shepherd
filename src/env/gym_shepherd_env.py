@@ -25,13 +25,7 @@ class ShepherdGymEnv(gym.Env):
         self.episode = EpisodeState(NUM_SHEEP)
 
         self.action_space = spaces.Box(-1, 1, (NUM_DOGS * 3,), np.float32)
-
-        obs_size = (
-            NUM_DOGS * 4 +
-            NUM_SHEEP * 4 +
-            2
-        )
-
+        obs_size = NUM_DOGS * 9  # dog pos/vel + centroid vector + gate vector + flock radius
         self.observation_space = spaces.Box(-1, 1, (obs_size,), np.float32)
 
         self.renderer = None
@@ -39,18 +33,6 @@ class ShepherdGymEnv(gym.Env):
             from src.render.pygame_renderer import PygameRenderer
             self.renderer = PygameRenderer()
 
-    def render(self):
-        if not self.renderer:
-            return
-
-        import pygame
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                self.close()
-                raise SystemExit
-
-        self.renderer.render(self.sheep, self.dogs, self.world)
-    
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
         self.world.reset()
@@ -59,11 +41,20 @@ class ShepherdGymEnv(gym.Env):
         self.sheep = [Sheep((np.random.rand()*FIELD_WIDTH, np.random.rand()*FIELD_HEIGHT))
                       for _ in range(NUM_SHEEP)]
         self.episode = EpisodeState(NUM_SHEEP)
-
-        # Track previous centroid for reward shaping
         self.prev_centroid = compute_centroid(self.sheep)
-
         return self._obs(), {}
+    
+    def render(self): 
+        if not self.renderer: 
+            return 
+        
+        import pygame 
+        for event in pygame.event.get(): 
+            if event.type == pygame.QUIT: 
+                self.close() 
+                raise SystemExit 
+                
+        self.renderer.render(self.sheep, self.dogs, self.world)
 
     def step(self, action):
         dogs_data = []
@@ -74,11 +65,8 @@ class ShepherdGymEnv(gym.Env):
         for s in self.sheep:
             s.update(self.sheep, dogs_data, self.world.gate.center)
 
-        # Compute reward with previous centroid
         curr_centroid = compute_centroid(self.sheep)
         reward = compute_reward(self.sheep, self.dogs, self.world, prev_centroid=self.prev_centroid)
-
-        # Update prev_centroid for next step
         self.prev_centroid = curr_centroid
 
         self.episode.update(self.sheep, self.world)
@@ -96,11 +84,15 @@ class ShepherdGymEnv(gym.Env):
 
     def _obs(self):
         obs = []
+        centroid = compute_centroid(self.sheep)
+        flock_radius = max(np.linalg.norm(s.pos - centroid) for s in self.sheep)
+        gate_vec = self.world.gate.center - centroid
+
         for d in self.dogs:
             obs.extend(d.pos)
             obs.extend(d.vel)
-        for s in self.sheep:
-            obs.extend(s.pos)
-            obs.extend(s.vel)
-        obs.extend(self.world.gate.center)
+            obs.extend(centroid - d.pos)
+            obs.extend(gate_vec)
+            obs.append(flock_radius)
+
         return np.array(obs, np.float32)

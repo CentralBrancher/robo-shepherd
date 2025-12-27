@@ -12,6 +12,5 @@ def directional_pressure(sheep_pos, dog_pos, gate_pos):
     dog_dir = normalize(sheep_pos - dog_pos)  # direction from dog to sheep
 
     alignment = np.dot(dog_dir, to_gate)  # [-1, 1]
-    # Map [-1,1] -> [0.1, 1.0]
     pressure = np.clip((alignment + 1) / 2 * 0.9 + 0.1, 0.1, 1.0)
     return pressure

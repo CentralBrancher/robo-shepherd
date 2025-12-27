@@ -7,7 +7,7 @@ from tqdm import tqdm
 # Parameters
 # -----------------------------
 NUM_EPISODES = 10
-MODEL_PATH = "./models/ppo_shepherd_2048"
+MODEL_PATH = "./models/ppo_shepherd"
 
 # -----------------------------
 # Load model
