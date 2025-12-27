@@ -17,9 +17,10 @@ class ShepherdGymEnv(gym.Env):
         self.render_mode = render_mode
 
         self.world = World()
-        self.dogs = [Dog((FIELD_WIDTH / 2, FIELD_HEIGHT / 2))]
+        self.dogs = [Dog((np.random.rand()*FIELD_WIDTH, np.random.rand()*FIELD_HEIGHT))
+                        for _ in range(NUM_DOGS)]
         self.sheep = [Sheep((np.random.rand()*FIELD_WIDTH, np.random.rand()*FIELD_HEIGHT))
-                      for _ in range(NUM_SHEEP)]
+                        for _ in range(NUM_SHEEP)]
         self.episode = EpisodeState(NUM_SHEEP)
 
         self.action_space = spaces.Box(-1, 1, (NUM_DOGS * 3,), np.float32)
@@ -37,12 +38,23 @@ class ShepherdGymEnv(gym.Env):
             from src.render.pygame_renderer import PygameRenderer
             self.renderer = PygameRenderer()
 
+    def render(self):
+        if not self.renderer:
+            return
+
+        import pygame
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.close()
+                raise SystemExit
+
+        self.renderer.render(self.sheep, self.dogs, self.world)
+
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
         self.world.reset()
-        for d in self.dogs:
-            d.pos[:] = FIELD_WIDTH/2, FIELD_HEIGHT/2
-            d.vel[:] = 0
+        self.dogs = [Dog((np.random.rand()*FIELD_WIDTH, np.random.rand()*FIELD_HEIGHT))
+                      for _ in range(NUM_DOGS)]
         self.sheep = [Sheep((np.random.rand()*FIELD_WIDTH, np.random.rand()*FIELD_HEIGHT))
                       for _ in range(NUM_SHEEP)]
         self.episode = EpisodeState(NUM_SHEEP)
@@ -60,8 +72,8 @@ class ShepherdGymEnv(gym.Env):
         reward = compute_reward(self.sheep, self.world)
         self.episode.update(self.sheep, self.world)
 
-        if self.renderer:
-            self.renderer.render(self.sheep, self.dogs, self.world)
+        if self.render_mode == "human":
+            self.render()
 
         return self._obs(), reward, self.episode.success, self.episode.done, {"success": self.episode.success}
 
