@@ -5,8 +5,4 @@ def compute_reward(sheep, world):
     radius = compute_flock_radius(sheep, centroid)
     in_gate = sheep_in_gate(sheep, world.gate)
 
-    reward = 0.0
-    reward += in_gate * 5.0         # main objective
-    reward -= radius * 0.01         # compactness penalty
-
-    return reward
+    return in_gate * 5.0 - radius * 0.01

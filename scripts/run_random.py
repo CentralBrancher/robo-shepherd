@@ -1,25 +1,11 @@
-import pygame
 from src.env.gym_shepherd_env import ShepherdGymEnv
 
-def main():
-    env = ShepherdGymEnv(sheep_count=10, render_mode="human")
-    obs, info = env.reset()
-    done = False
-    clock = pygame.time.Clock()
+env = ShepherdGymEnv(render_mode="human")
+obs, _ = env.reset()
+done = False
 
-    print("Starting random policy episode...")
+while not done:
+    obs, reward, term, trunc, info = env.step(env.action_space.sample())
+    done = term or trunc
 
-    while not done:
-        action = env.action_space.sample()
-        obs, reward, terminated, truncated, info = env.step(action)
-        done = terminated or truncated
-        clock.tick(60)
-
-    print("Episode finished")
-    print("Success:", info.get("success", False))
-
-    env.close()
-
-if __name__ == "__main__":
-    main()
-
+env.close()

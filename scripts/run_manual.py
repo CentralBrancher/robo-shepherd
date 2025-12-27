@@ -1,51 +1,27 @@
 import pygame
 import numpy as np
+from src.env.gym_shepherd_env import ShepherdGymEnv
 
-from src.env.constants import FIELD_WIDTH, FIELD_HEIGHT, NUM_SHEEP
-from src.agents.sheep import Sheep
-from src.agents.dog import Dog
-from src.env.world import World
-from src.render.pygame_renderer import PygameRenderer
-from src.rewards.shaping import compute_reward
-from src.env.shepherd_env import EpisodeState
+pygame.init()
+env = ShepherdGymEnv(render_mode="human")
+obs, _ = env.reset()
 
-def main():
-    renderer = PygameRenderer()
-    world = World()
-
-    sheep = [
-        Sheep((np.random.uniform(0, FIELD_WIDTH),
-            np.random.uniform(0, FIELD_HEIGHT)))
-        for _ in range(NUM_SHEEP)
-    ]
-
-    dog = Dog((FIELD_WIDTH / 2, FIELD_HEIGHT / 2))
-
-    episode = EpisodeState(len(sheep))
-
-    running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-
-        keys = pygame.key.get_pressed()
-        dog.update(keys)
-
-        for s in sheep:
-            s.update(sheep, dog.pos)
-
-        reward = compute_reward(sheep, world)
-        episode.update(sheep, world)
-
-        renderer.render(sheep, dog, world)
-
-        if episode.done:
-            print("SUCCESS!" if episode.success else "FAILED")
-            pygame.time.wait(2000)
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
             running = False
 
-    pygame.quit()    
+    keys = pygame.key.get_pressed()
+    action = np.zeros(env.action_space.shape)
 
-if __name__ == "__main__":
-    main()
+    action[0] = keys[pygame.K_d] - keys[pygame.K_a]
+    action[1] = keys[pygame.K_s] - keys[pygame.K_w]
+    action[2] = keys[pygame.K_SPACE]  # bark
+
+    obs, _, done, _, _ = env.step(action)
+    if done:
+        obs, _ = env.reset()
+
+env.close()
+pygame.quit()

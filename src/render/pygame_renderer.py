@@ -19,7 +19,7 @@ class PygameRenderer:
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont("consolas", 18)
 
-    def render(self, sheep, dog, world):
+    def render(self, sheep, dogs, world):
         self.clock.tick(FPS)
         self.screen.fill(GREEN)
 
@@ -39,7 +39,8 @@ class PygameRenderer:
             pygame.draw.circle(self.screen, WHITE, s.pos.astype(int), SHEEP_RADIUS)
 
         # Dog
-        pygame.draw.circle(self.screen, RED, dog.pos.astype(int), DOG_RADIUS)
+        for d in dogs:
+            pygame.draw.circle(self.screen, RED, d.pos.astype(int), DOG_RADIUS)
 
         # Debug: centroid + radius
         centroid = compute_centroid(sheep)
