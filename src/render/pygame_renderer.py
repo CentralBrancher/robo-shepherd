@@ -32,12 +32,7 @@ class PygameRenderer:
             20
         )
 
-        pygame.draw.rect(
-            self.screen,
-            BLUE,
-            rect,
-            2
-        )
+        pygame.draw.rect(self.screen, BLUE, rect, 2)
 
         # Sheep
         for s in sheep:

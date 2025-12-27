@@ -1,7 +1,6 @@
 from src.env.constants import *
 from src.env.world import World
 from src.physics.flocking import sheep_in_gate
-from src.rewards.shaping import compute_reward
 
 class EpisodeState:
     def __init__(self, sheep_count):

@@ -60,10 +60,6 @@ class ShepherdGymEnv(gym.Env):
             from src.render.pygame_renderer import PygameRenderer
             self.renderer = PygameRenderer()
 
-    # -------------------------
-    # Gym API
-    # -------------------------
-
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
 
@@ -84,20 +80,14 @@ class ShepherdGymEnv(gym.Env):
         return obs, info
 
     def step(self, action):
-        # Clip for safety
         action = np.clip(action, -1.0, 1.0)
-
-        # Apply action
+        
         self.dog.apply_action(action)
-
-        # Update sheep
+        
         for s in self.sheep:
             s.update(self.sheep, self.dog.pos)
-
-        # Reward
+        
         reward = compute_reward(self.sheep, self.world)
-
-        # Episode logic
         self.episode.update(self.sheep, self.world)
 
         terminated = self.episode.success
@@ -119,24 +109,16 @@ class ShepherdGymEnv(gym.Env):
         if self.renderer:
             self.renderer.close()
 
-    # -------------------------
-    # Helpers
-    # -------------------------
-
     def _get_obs(self):
         obs = []
 
-        # Dog
         obs.extend(self.dog.pos)
         obs.extend(self.dog.vel)
 
-        # Sheep
         for s in self.sheep:
             obs.extend(s.pos)
         for s in self.sheep:
             obs.extend(s.vel)
 
-        # Gate
         obs.extend(self.world.gate.center)
-
         return np.array(obs, dtype=np.float32)

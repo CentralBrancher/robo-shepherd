@@ -30,10 +30,6 @@ class World:
         return pos
 
     def reset(self):
-        """
-        Reset world state.
-        Currently static, but required for Gym compatibility.
-        """
         # Gate is static for now, nothing to reset
         pass
 
