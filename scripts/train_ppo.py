@@ -16,7 +16,7 @@ model = PPO(
     "MlpPolicy",
     env,
     verbose=1,
-    n_steps=1024,
+    n_steps=2048,
     batch_size=64,
     learning_rate=3e-4,
     gamma=0.99,
@@ -32,11 +32,14 @@ checkpoint_callback = make_checkpoint_callback()
 # -----------------------------
 # Train
 # -----------------------------
-TOTAL_TIMESTEPS = 20_000
-model.learn(
-    total_timesteps=TOTAL_TIMESTEPS,
-    callback=[checkpoint_callback, progress_callback]
-)
+TOTAL_TIMESTEPS = int(20_000)
+try:
+    model.learn(
+        total_timesteps=TOTAL_TIMESTEPS,
+        callback=[checkpoint_callback, progress_callback]
+    )
+except KeyboardInterrupt:
+    model.save("./models/ppo_shepherd_interrupt")
 
 # Save final model
 model.save("./models/ppo_shepherd")

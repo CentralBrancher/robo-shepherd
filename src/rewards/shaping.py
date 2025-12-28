@@ -1,49 +1,61 @@
 import numpy as np
-from src.physics.flocking import compute_centroid, sheep_in_gate
-from src.physics.directional import directional_pressure
+from src.physics.flocking import compute_centroid, compute_flock_radius, sheep_in_gate
+from src.utils.math import normalize
 from src.env.constants import FIELD_WIDTH, FIELD_HEIGHT
 
 def compute_reward(sheep, dogs, world, prev_centroid=None):
-    """
-    Reward function for shepherding:
-    - Primary objective: sheep in gate
-    - Shaping: flock centroid approaching gate
-    - Dog incentives: stay near flock, reduce distance to gate, apply directional pressure
-    """
-
-    reward = -0.05  # small time penalty to encourage faster herding
-
-    # 1. Primary objective: sheep in gate
-    in_gate = sheep_in_gate(sheep, world.gate)
-    reward += in_gate * 2.0
-
-    # 2. Flock centroid shaping
     centroid = compute_centroid(sheep)
+    radius = compute_flock_radius(sheep, centroid)
+
+    gate_pos = world.gate.center
+    dist_to_gate = np.linalg.norm(centroid - gate_pos)
+
+    # Smooth phase weight:
+    # far → 0 (herding phase)
+    # near → 1 (gate precision phase)
+    gate_focus = np.exp(-dist_to_gate / 200.0)
+
+    reward = -0.1  # time penalty (forces completion)
+
+    # ─────────────────────────────
+    # 1. Progress toward gate (dominant late)
+    # ─────────────────────────────
     if prev_centroid is not None:
-        prev_dist = np.linalg.norm(prev_centroid - world.gate.center)
-        curr_dist = np.linalg.norm(centroid - world.gate.center)
-        # Reward reduction in distance to gate
-        reward += np.clip(prev_dist - curr_dist, -10.0, 10.0) * 1.0
+        prev_dist = np.linalg.norm(prev_centroid - gate_pos)
+        progress = np.clip(prev_dist - dist_to_gate, -5.0, 5.0)
+        reward += gate_focus * progress * 3.0
 
-    # 3. Dog proximity and directional shaping
+    # ─────────────────────────────
+    # 2. Strong gate success reward
+    # ─────────────────────────────
+    in_gate = sheep_in_gate(sheep, world.gate)
+    reward += in_gate * 40.0
+
+    # ─────────────────────────────
+    # 3. Flock compactness (early only)
+    # ─────────────────────────────
+    reward -= (1.0 - gate_focus) * radius * 0.02
+
+    # ─────────────────────────────
+    # 4. Penalize dogs blocking the gate
+    # ─────────────────────────────
+    to_gate = normalize(gate_pos - centroid)
+
     for dog in dogs:
-        dist_to_centroid = np.linalg.norm(dog.pos - centroid)
-        reward -= 0.01 * dist_to_centroid  # penalize being far from flock
+        dog_vec = normalize(dog.pos - centroid)
 
-        dist_to_gate = np.linalg.norm(dog.pos - world.gate.center)
-        reward += 0.001 * (FIELD_WIDTH - dist_to_gate)  # incentive toward gate
+        # Dog in front of flock relative to gate direction
+        if np.dot(dog_vec, to_gate) > 0.3:
+            reward -= 1.0
 
-        # Directional pressure reward: dogs behind flock
-        flock_dir = world.gate.center - centroid
-        pressure = directional_pressure(
-            sheep_pos=centroid,
-            dog_pos=dog.pos,
-            gate_pos=world.gate.center
-        )
-        reward += 0.5 * pressure  # encourage proper positioning behind flock
-
-    # 4. Optional: small shaping for flock spread (penalize very dispersed flock)
-    flock_radius = max(np.linalg.norm(s.pos - centroid) for s in sheep)
-    reward -= 0.01 * flock_radius  # encourages cohesive flocking
+    # ─────────────────────────────
+    # 5. Mild dog wall penalty (not dominant)
+    # ─────────────────────────────
+    for dog in dogs:
+        if (
+            dog.pos[0] < 20 or dog.pos[0] > FIELD_WIDTH - 20 or
+            dog.pos[1] < 20 or dog.pos[1] > FIELD_HEIGHT - 20
+        ):
+            reward -= 0.3
 
     return reward
