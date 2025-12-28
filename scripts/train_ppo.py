@@ -12,8 +12,10 @@ env = DummyVecEnv([lambda: ShepherdGymEnv(render_mode=None) for _ in range(NUM_E
 # -----------------------------
 # PPO model
 # -----------------------------
+MODEL_PATH = "./models/ppo_shepherd_1200000_steps.zip"
+
 model = PPO(
-    "MlpPolicy",
+    MODEL_PATH,
     env,
     verbose=1,
     n_steps=2048,
@@ -22,6 +24,17 @@ model = PPO(
     gamma=0.99,
     ent_coef=0.01
 )
+
+# model = PPO(
+#     "MlpPolicy",
+#     env,
+#     verbose=1,
+#     n_steps=2048,
+#     batch_size=64,
+#     learning_rate=3e-4,
+#     gamma=0.99,
+#     ent_coef=0.01
+# )
 
 # -----------------------------
 # Callbacks
@@ -32,7 +45,7 @@ checkpoint_callback = make_checkpoint_callback()
 # -----------------------------
 # Train
 # -----------------------------
-TOTAL_TIMESTEPS = int(20_000)
+TOTAL_TIMESTEPS = int(1E12)
 try:
     model.learn(
         total_timesteps=TOTAL_TIMESTEPS,

@@ -3,59 +3,74 @@ from src.physics.flocking import compute_centroid, compute_flock_radius, sheep_i
 from src.utils.math import normalize
 from src.env.constants import FIELD_WIDTH, FIELD_HEIGHT
 
+
 def compute_reward(sheep, dogs, world, prev_centroid=None):
     centroid = compute_centroid(sheep)
     radius = compute_flock_radius(sheep, centroid)
-
     gate_pos = world.gate.center
-    dist_to_gate = np.linalg.norm(centroid - gate_pos)
-
-    # Smooth phase weight:
-    # far → 0 (herding phase)
-    # near → 1 (gate precision phase)
-    gate_focus = np.exp(-dist_to_gate / 200.0)
-
-    reward = -0.1  # time penalty (forces completion)
 
     # ─────────────────────────────
-    # 1. Progress toward gate (dominant late)
+    # Base time penalty
+    # ─────────────────────────────
+    reward = -0.1
+
+    # ─────────────────────────────
+    # 1. Continuous centroid progress toward gate (PRIMARY DRIVER)
     # ─────────────────────────────
     if prev_centroid is not None:
         prev_dist = np.linalg.norm(prev_centroid - gate_pos)
-        progress = np.clip(prev_dist - dist_to_gate, -5.0, 5.0)
-        reward += gate_focus * progress * 3.0
+        curr_dist = np.linalg.norm(centroid - gate_pos)
+        progress = np.clip(prev_dist - curr_dist, -5.0, 5.0)
+        reward += progress * 2.0
+
+        # Penalize stalled flock
+        centroid_motion = np.linalg.norm(centroid - prev_centroid)
+        reward -= np.exp(-centroid_motion * 5.0)
 
     # ─────────────────────────────
-    # 2. Strong gate success reward
+    # 2. Terminal success reward (NOT exploitable)
     # ─────────────────────────────
     in_gate = sheep_in_gate(sheep, world.gate)
-    reward += in_gate * 40.0
+    reward += in_gate * 0.5  # shaping only
 
     # ─────────────────────────────
-    # 3. Flock compactness (early only)
+    # 3. Flock compactness (early pressure)
     # ─────────────────────────────
-    reward -= (1.0 - gate_focus) * radius * 0.02
+    reward -= radius * 0.015
 
     # ─────────────────────────────
-    # 4. Penalize dogs blocking the gate
+    # 4. Penalize dogs blocking gate direction (continuous)
     # ─────────────────────────────
     to_gate = normalize(gate_pos - centroid)
 
     for dog in dogs:
         dog_vec = normalize(dog.pos - centroid)
-
-        # Dog in front of flock relative to gate direction
-        if np.dot(dog_vec, to_gate) > 0.3:
-            reward -= 1.0
+        block = np.clip(np.dot(dog_vec, to_gate), 0.0, 1.0)
+        reward -= block * 3.0
 
     # ─────────────────────────────
-    # 5. Mild dog wall penalty (not dominant)
+    # 5. Anti wall-hugging penalty (CRITICAL)
     # ─────────────────────────────
     for dog in dogs:
-        if (
-            dog.pos[0] < 20 or dog.pos[0] > FIELD_WIDTH - 20 or
-            dog.pos[1] < 20 or dog.pos[1] > FIELD_HEIGHT - 20
-        ):
-            reward -= 0.3
+        wall_dist = min(
+            dog.pos[0],
+            FIELD_WIDTH - dog.pos[0],
+            dog.pos[1],
+            FIELD_HEIGHT - dog.pos[1]
+        )
+        reward -= np.exp(-wall_dist / 40.0) * 2.0
+
+    # ─────────────────────────────
+    # 6. Mild sheep-wall interaction penalty
+    # (prevents pinning sheep directly)
+    # ─────────────────────────────
+    for s in sheep:
+        wall_dist = min(
+            s.pos[0],
+            FIELD_WIDTH - s.pos[0],
+            s.pos[1],
+            FIELD_HEIGHT - s.pos[1]
+        )
+        reward -= np.exp(-wall_dist / 30.0) * 0.05
 
     return reward

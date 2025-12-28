@@ -48,6 +48,6 @@ class ProgressCallback(BaseCallback):
         self.pbar.close()
 
 
-def make_checkpoint_callback(save_freq=100_000, save_path="./models/", name_prefix="ppo_shepherd"):
+def make_checkpoint_callback(save_freq=25_000, save_path="./models/", name_prefix="ppo_shepherd"):
     """Return a Stable-Baselines3 CheckpointCallback."""
     return CheckpointCallback(save_freq=save_freq, save_path=save_path, name_prefix=name_prefix)

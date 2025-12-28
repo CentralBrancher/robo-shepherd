@@ -65,9 +65,11 @@ class ShepherdGymEnv(gym.Env):
         for s in self.sheep:
             s.update(self.sheep, dogs_data, self.world.gate.center)
 
-        curr_centroid = compute_centroid(self.sheep)
         reward = compute_reward(self.sheep, self.dogs, self.world, prev_centroid=self.prev_centroid)
-        self.prev_centroid = curr_centroid
+        if self.episode.success:
+            reward += 500.0
+
+        self.prev_centroid = compute_centroid(self.sheep)
 
         self.episode.update(self.sheep, self.world)
 
