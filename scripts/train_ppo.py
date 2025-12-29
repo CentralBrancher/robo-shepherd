@@ -12,24 +12,24 @@ env = DummyVecEnv([lambda: ShepherdGymEnv(render_mode=None) for _ in range(NUM_E
 # -----------------------------
 # PPO model
 # -----------------------------
-MODEL_PATH = "./models/ppo_shepherd_100000_steps.zip"
+# MODEL_PATH = "./models/ppo_shepherd_900000_steps.zip"
 
-model = PPO.load(
-    MODEL_PATH,
-    env,
-    verbose=1
-)
-
-# model = PPO(
-#     "MlpPolicy",
+# model = PPO.load(
+#     MODEL_PATH,
 #     env,
-#     verbose=1,
-#     n_steps=1024,
-#     batch_size=64,
-#     learning_rate=5e-5,
-#     gamma=0.99,
-#     ent_coef=0.01
+#     verbose=1
 # )
+
+model = PPO(
+    "MlpPolicy",
+    env,
+    verbose=1,
+    n_steps=1024,
+    batch_size=64,
+    learning_rate=1e-4,
+    gamma=0.99,
+    ent_coef=0.01
+)
 
 # -----------------------------
 # Callbacks
@@ -40,11 +40,11 @@ checkpoint_callback = make_checkpoint_callback()
 # -----------------------------
 # Train
 # -----------------------------
-TOTAL_TIMESTEPS = int(1E12)
+TOTAL_TIMESTEPS = int(20_000)
 try:
     model.learn(
         total_timesteps=TOTAL_TIMESTEPS,
-        reset_num_timesteps=False,
+        #reset_num_timesteps=False,
         callback=[checkpoint_callback, progress_callback]
     )
 except KeyboardInterrupt:

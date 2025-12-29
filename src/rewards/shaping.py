@@ -21,17 +21,17 @@ def compute_reward(sheep, dogs, world, prev_centroid=None):
         prev_dist = np.linalg.norm(prev_centroid - gate_pos)
         curr_dist = np.linalg.norm(centroid - gate_pos)
         progress = np.clip(prev_dist - curr_dist, -5.0, 5.0)
-        reward += progress * 2.0
+        reward += progress * 100.0
 
-        # Penalize stalled flock
-        centroid_motion = np.linalg.norm(centroid - prev_centroid)
-        reward -= np.exp(-centroid_motion * 5.0)
+        # # Penalize stalled flock
+        # centroid_motion = np.linalg.norm(centroid - prev_centroid)
+        # reward -= np.exp(-centroid_motion * 5.0)
 
     # ─────────────────────────────
     # 2. Terminal success reward (NOT exploitable)
     # ─────────────────────────────
     in_gate = sheep_in_gate(sheep, world.gate)
-    reward += in_gate * 0.5  # shaping only
+    reward += in_gate * 50.0  # shaping only
 
     # ─────────────────────────────
     # 3. Flock compactness (early pressure)
@@ -58,7 +58,7 @@ def compute_reward(sheep, dogs, world, prev_centroid=None):
             dog.pos[1],
             FIELD_HEIGHT - dog.pos[1]
         )
-        reward -= np.exp(-wall_dist / 40.0) * 2.0
+        reward -= np.exp(-wall_dist / 60.0) * 2.0
 
     # ─────────────────────────────
     # 6. Mild sheep-wall interaction penalty
@@ -71,6 +71,6 @@ def compute_reward(sheep, dogs, world, prev_centroid=None):
             s.pos[1],
             FIELD_HEIGHT - s.pos[1]
         )
-        reward -= np.exp(-wall_dist / 30.0) * 0.05
+        reward -= np.exp(-wall_dist / 60.0) * 0.05
 
     return reward
