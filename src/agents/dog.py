@@ -1,6 +1,7 @@
 import numpy as np
 from src.env.constants import *
 from src.agents.base import KinematicBody
+from src.utils.math import soft_wall_force
 
 class Dog(KinematicBody):
     def __init__(self, pos, bark_cooldown_max=30):
@@ -24,6 +25,7 @@ class Dog(KinematicBody):
             self.bark_cooldown -= 1
 
         accel = move * self.accel_scale
+        accel += soft_wall_force(self.pos, strength=0.8)
         self.integrate(accel)
 
         # Hard wall handling (no sticking)

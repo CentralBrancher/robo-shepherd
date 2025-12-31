@@ -2,6 +2,7 @@ import numpy as np
 from src.env.constants import *
 from src.utils.math import normalize, limit_magnitude
 from src.physics.directional import directional_pressure
+from src.utils.math import soft_wall_force
 
 class Sheep:
     def __init__(self, pos):
@@ -49,7 +50,8 @@ class Sheep:
             ALIGNMENT_WEIGHT * alignment +
             COHESION_WEIGHT * cohesion +
             DOG_REPULSION_WEIGHT * dog_force +
-            NOISE_WEIGHT * np.random.uniform(-1, 1, 2)
+            NOISE_WEIGHT * np.random.uniform(-1, 1, 2) +
+            soft_wall_force(self.pos, strength=0.4)
         )
 
         self.vel += accel

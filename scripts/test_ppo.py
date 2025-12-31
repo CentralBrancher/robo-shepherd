@@ -17,30 +17,31 @@ model = PPO.load(MODEL_PATH)
 # -----------------------------
 # Evaluation loop
 # -----------------------------
-episode_durations = []
+successes = 0
+steps_to_success = []
 
-for ep in tqdm(range(NUM_EPISODES), desc="Evaluating Episodes", ncols=100):
-    env = ShepherdGymEnv(render_mode="human")
-    obs, _ = env.reset()
+for ep in tqdm(range(NUM_EPISODES), desc="Evaluating", ncols=100):
+    env = ShepherdGymEnv(render_mode=None)
+    obs, _ = env.reset(seed=ep)
     done = False
     steps = 0
 
     while not done:
         action, _ = model.predict(obs, deterministic=True)
-        obs, reward, terminated, truncated, info = env.step(action)
-        done = terminated or truncated
+        obs, reward, term, trunc, info = env.step(action)
+        done = term or trunc
         steps += 1
 
-    episode_durations.append(steps)
+    if info.get("success", False):
+        successes += 1
+        steps_to_success.append(steps)
+
     env.close()
 
 # -----------------------------
 # Summary
 # -----------------------------
-avg_steps = np.mean(episode_durations)
-min_steps = np.min(episode_durations)
-max_steps = np.max(episode_durations)
-
-print(f"\nEvaluation complete over {NUM_EPISODES} episodes")
-print(f"Avg steps to success: {avg_steps:.1f}")
-print(f"Min steps: {min_steps}, Max steps: {max_steps}")
+print(f"Success rate: {successes}/{NUM_EPISODES}")
+if steps_to_success:
+    print(f"Avg steps (successful): {np.mean(steps_to_success):.1f}")
+    

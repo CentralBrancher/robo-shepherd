@@ -31,9 +31,9 @@ class ProgressCallback(BaseCallback):
                 self.episode_rewards[i] = 0
                 self.episode_sheep[i] = 0
 
-        avg_reward = np.mean([r for r in self.episode_rewards if r > 0]) if np.any(self.episode_rewards > 0) else 0
-        avg_steps = np.mean([s for s in self.episode_steps if s > 0]) if np.any(self.episode_steps > 0) else 0
-        avg_sheep = np.mean([s for s in self.episode_sheep if s > 0]) if np.any(self.episode_sheep > 0) else 0
+        avg_reward = np.mean(self.episode_rewards)
+        avg_steps = np.mean(self.episode_steps)
+        avg_sheep = np.mean(self.episode_sheep)
 
         self.pbar.set_postfix({
             "AvgReward": f"{avg_reward:.2f}",

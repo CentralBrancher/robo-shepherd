@@ -25,7 +25,7 @@ class ShepherdGymEnv(gym.Env):
         self.episode = EpisodeState(NUM_SHEEP)
 
         self.action_space = spaces.Box(-1, 1, (NUM_DOGS * 3,), np.float32)
-        obs_size = NUM_DOGS * 9  # dog pos/vel + centroid vector + gate vector + flock radius
+        obs_size = NUM_DOGS * 11  # dog pos/vel + centroid vector + gate vector + flock radius + other dog vector
         self.observation_space = spaces.Box(-1, 1, (obs_size,), np.float32)
 
         self.renderer = None
@@ -66,8 +66,9 @@ class ShepherdGymEnv(gym.Env):
             s.update(self.sheep, dogs_data, self.world.gate.center)
 
         reward = compute_reward(self.sheep, self.dogs, self.world, prev_centroid=self.prev_centroid)
+        
         if self.episode.success:
-            reward += 500.0
+            reward += 75.0
 
         self.prev_centroid = compute_centroid(self.sheep)
 
@@ -90,11 +91,23 @@ class ShepherdGymEnv(gym.Env):
         flock_radius = max(np.linalg.norm(s.pos - centroid) for s in self.sheep)
         gate_vec = self.world.gate.center - centroid
 
-        for d in self.dogs:
-            obs.extend(d.pos)
-            obs.extend(d.vel)
-            obs.extend(centroid - d.pos)
-            obs.extend(gate_vec)
-            obs.append(flock_radius)
+        max_dist = np.array([FIELD_WIDTH, FIELD_HEIGHT], dtype=np.float32)
 
-        return np.array(obs, np.float32)
+        for i, d in enumerate(self.dogs):
+            # Normalize everything
+            obs.extend(d.pos / max_dist)
+            obs.extend(d.vel / DOG_MAX_SPEED)
+            obs.extend((centroid - d.pos) / max_dist)
+            obs.extend(gate_vec / max_dist)
+            obs.append(flock_radius / max(FIELD_WIDTH, FIELD_HEIGHT))
+
+            # Relative vector to nearest other dog
+            others = [od for j, od in enumerate(self.dogs) if j != i]
+            if others:
+                rel = others[0].pos - d.pos
+                obs.extend(rel / max_dist)
+            else:
+                obs.extend([0.0, 0.0])
+
+        return np.array(obs, dtype=np.float32)
+
