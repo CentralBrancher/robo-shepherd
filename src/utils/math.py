@@ -1,4 +1,6 @@
 import numpy as np
+from src.env.constants import FIELD_WIDTH, FIELD_HEIGHT
+
 
 def limit_magnitude(vec, max_val):
     mag = np.linalg.norm(vec)

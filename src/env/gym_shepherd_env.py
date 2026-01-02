@@ -24,6 +24,9 @@ class ShepherdGymEnv(gym.Env):
                         for _ in range(NUM_SHEEP)]
         self.episode = EpisodeState(NUM_SHEEP)
 
+        self.sheep_skip = 2
+        self._sheep_tick = 0
+
         self.action_space = spaces.Box(-1, 1, (NUM_DOGS * 3,), np.float32)
         obs_size = NUM_DOGS * 11  # dog pos/vel + centroid vector + gate vector + flock radius + other dog vector
         self.observation_space = spaces.Box(-1, 1, (obs_size,), np.float32)
@@ -62,8 +65,10 @@ class ShepherdGymEnv(gym.Env):
             bark = dog.step(action[i*3:(i+1)*3])
             dogs_data.append((dog.pos.copy(), bark))
 
-        for s in self.sheep:
-            s.update(self.sheep, dogs_data, self.world.gate.center)
+        self._sheep_tick += 1
+        if self._sheep_tick % self.sheep_skip == 0:
+            for s in self.sheep:
+                s.update(self.sheep, dogs_data, self.world.gate.center)
 
         reward = compute_reward(self.sheep, self.dogs, self.world, prev_centroid=self.prev_centroid)
         
